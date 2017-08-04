@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 )
 
 type RetroClient struct {
-	Host string
-	ID   string
+	Host  string
+	ID    string
+	Token string
 }
 
 type Category string
@@ -24,6 +26,45 @@ const (
 type RetroItem struct {
 	Description string   `json:"description"`
 	Category    Category `json:"category"`
+	WriteKey    string   `json:"writeKey"`
+}
+
+func (c *RetroClient) Login(password string) (string, error) {
+	var m = make(map[string]map[string]string)
+
+	m["retro"] = make(map[string]string)
+	m["retro"]["password"] = password
+
+	b := new(bytes.Buffer)
+	json.NewEncoder(b).Encode(m)
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/retros/%s/login", c.Host, c.ID), b)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		b, _ := httputil.DumpResponse(res, true)
+		return "", fmt.Errorf("unexpected response code (%d) - %s", res.StatusCode, string(b))
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+
+	var objmap map[string]*json.RawMessage
+	err = json.Unmarshal(body, &objmap)
+
+	var p string
+	err = json.Unmarshal(*objmap["token"], &p)
+
+	return p, err
 }
 
 func (c *RetroClient) Add(i RetroItem) error {
@@ -36,13 +77,18 @@ func (c *RetroClient) Add(i RetroItem) error {
 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Token %s", c.Token))
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 
-	if res.StatusCode != http.StatusCreated {
+	switch res.StatusCode {
+	case http.StatusCreated:
+	case http.StatusUnauthorized:
+		return fmt.Errorf("unauthorized. try setting *_RETRO_PASSWORD var(s)")
+	default:
 		b, _ := httputil.DumpResponse(res, true)
 		return fmt.Errorf("unexpected response code (%d) - %s", res.StatusCode, string(b))
 	}
