@@ -41,6 +41,13 @@ func NewOKResponse(text string) Response {
 	}
 }
 
+func NewPrivateResponse(text string) Response {
+	return Response{
+		Type: "ephemeral",
+		Text: text,
+	}
+}
+
 func NewErrResponse(text string) Response {
 	return Response{
 		Type: "ephemeral",
@@ -76,5 +83,5 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(NewOKResponse(msg))
+	json.NewEncoder(w).Encode(NewPrivateResponse(msg))
 }
