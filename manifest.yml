@@ -13,4 +13,5 @@ applications:
     POSTFACTO_TECH_RETRO_ID:
     POSTFACTO_WRITE_KEY:
     POSTFACTO_RETRO_PASSWORD:
+    SLACK_CHANNEL_ID: # optional - restrict the command to one channel
   stack: cflinuxfs2

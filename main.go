@@ -92,8 +92,11 @@ func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) 
 		return "", fmt.Errorf("must be in the form of '%s [happy/meh/sad/tech] [message]'", r.Command)
 	}
 
-	if r.ChannelID != "<SLACK CHANNEL ID>" {
-		return "", fmt.Errorf("Retro items must be logged from the CF Toronto pivots channel.")
+	slackChannelID, ok := os.LookupEnv("SLACK_CHANNEL_ID")
+	if ok {
+		if slackChannelID != "" && r.ChannelID != slackChannelID {
+			return "", fmt.Errorf("Retro items must be logged from the CF Toronto pivots channel.")
+		}
 	}
 
 	c := parts[0]
