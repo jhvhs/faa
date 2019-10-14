@@ -28,7 +28,7 @@ type RetroItem struct {
 
 func (c *RetroClient) Add(i RetroItem) error {
 	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(i)
+	_ = json.NewEncoder(b).Encode(i)
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/retros/%s/items", c.Host, c.ID), b)
 	if err != nil {
 		return err

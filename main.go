@@ -25,17 +25,17 @@ func main() {
 
 	vToken, ok := os.LookupEnv("SLACK_VERIFICATION_TOKEN")
 	if !ok {
-		panic(errors.New("Must provide SLACK_VERIFICATION_TOKEN"))
+		panic(errors.New("must provide SLACK_VERIFICATION_TOKEN"))
 	}
 
 	retroID, ok := os.LookupEnv("POSTFACTO_RETRO_ID")
 	if !ok {
-		panic(errors.New("Must provide POSTFACTO_RETRO_ID"))
+		panic(errors.New("must provide POSTFACTO_RETRO_ID"))
 	}
 
 	techRetroID, ok := os.LookupEnv("POSTFACTO_TECH_RETRO_ID")
 	if !ok {
-		panic(errors.New("Must provide POSTFACTO_TECH_RETRO_ID"))
+		panic(errors.New("must provide POSTFACTO_TECH_RETRO_ID"))
 	}
 
 	c := &postfacto.RetroClient{

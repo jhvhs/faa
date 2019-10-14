@@ -53,7 +53,7 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		json.NewEncoder(w).Encode(NewErrResponse(err.Error()))
+		_ = json.NewEncoder(w).Encode(NewErrResponse(err.Error()))
 		return
 	}
 
@@ -61,20 +61,20 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = schema.NewDecoder().Decode(&c, r.PostForm)
 	if err != nil {
-		json.NewEncoder(w).Encode(NewErrResponse(err.Error()))
+		_ = json.NewEncoder(w).Encode(NewErrResponse(err.Error()))
 		return
 	}
 
 	if c.Token != s.VerificationToken {
-		json.NewEncoder(w).Encode(NewErrResponse("token verification failed"))
+		_ = json.NewEncoder(w).Encode(NewErrResponse("token verification failed"))
 		return
 	}
 
 	msg, err := s.Delegate.Handle(c)
 	if err != nil {
-		json.NewEncoder(w).Encode(NewErrResponse(err.Error()))
+		_ = json.NewEncoder(w).Encode(NewErrResponse(err.Error()))
 		return
 	}
 
-	json.NewEncoder(w).Encode(NewOKResponse(msg))
+	_ = json.NewEncoder(w).Encode(NewOKResponse(msg))
 }
