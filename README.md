@@ -19,7 +19,11 @@ FAA runs as an app on Cloud Foundry. To successfully push, you must provide the 
 
 - `SLACK_VERIFICATION_TOKEN`: *string*, Verification token provided by your slack integration, see "Token" in the slack configuration above
 - `POSTFACTO_RETRO_ID`: *integer*, The postfacto ID of your regular retro
-- `POSTFACTO_TECH_RETRO_ID`: *integer*, The postfacto ID of your tech retro
+
+It's also possible to provide the following optional settings:
+- `POSTFACTO_APP_URL`: *string*, The URL of the main browser app, defaults to `https://retros.cfapps.io`
+- `POSTFACTO_API_URL`: *string*, The URL of the postfacto API, defaults to `https://retros-iad-api.cfapps.io`
+- `POSTFACTO_RETRO_PASSWORD`: *string*, Set this when the retro board is password-protected
 
 Other configuration necessary to run on Cloud Foundry can be found in our [production manifest.yml](manifest.yml)
 

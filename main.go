@@ -14,13 +14,21 @@ import (
 )
 
 func main() {
-	var (
-		port string
-		ok   bool
-	)
-	port, ok = os.LookupEnv("PORT")
+	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		port = "8080"
+	}
+
+	retroPassword, _ := os.LookupEnv("POSTFACTO_RETRO_PASSWORD")
+
+	retroApiURL, ok := os.LookupEnv("POSTFACTO_API_URL")
+	if !ok {
+		retroApiURL = "https://retros-iad-api.cfapps.io"
+	}
+
+	retroAppURL, ok := os.LookupEnv("POSTFACTO_APP_URL")
+	if !ok {
+		retroAppURL = "https://retros.cfapps.io"
 	}
 
 	vToken, ok := os.LookupEnv("SLACK_VERIFICATION_TOKEN")
@@ -33,26 +41,17 @@ func main() {
 		panic(errors.New("must provide POSTFACTO_RETRO_ID"))
 	}
 
-	techRetroID, ok := os.LookupEnv("POSTFACTO_TECH_RETRO_ID")
-	if !ok {
-		panic(errors.New("must provide POSTFACTO_TECH_RETRO_ID"))
-	}
-
 	c := &postfacto.RetroClient{
-		Host: "https://retro-api.cfapps.io",
-		ID:   retroID,
-	}
-
-	t := &postfacto.RetroClient{
-		Host: "https://retro-api.cfapps.io",
-		ID:   techRetroID,
+		ApiHost:  retroApiURL,
+		AppHost: retroAppURL,
+		ID:       retroID,
+		Password: retroPassword,
 	}
 
 	server := slackcommand.Server{
 		VerificationToken: vToken,
 		Delegate: &PostfactoSlackDelegate{
-			RetroClient:     c,
-			TechRetroClient: t,
+			RetroClient: c,
 		},
 	}
 
@@ -62,8 +61,7 @@ func main() {
 }
 
 type PostfactoSlackDelegate struct {
-	RetroClient     *postfacto.RetroClient
-	TechRetroClient *postfacto.RetroClient
+	RetroClient *postfacto.RetroClient
 }
 
 type Command string
@@ -72,38 +70,30 @@ const (
 	CommandHappy Command = "happy"
 	CommandMeh   Command = "meh"
 	CommandSad   Command = "sad"
-	CommandTech  Command = "tech"
 )
 
 func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) {
 	parts := strings.SplitN(r.Text, " ", 2)
 	if len(parts) < 2 {
-		return "", fmt.Errorf("must be in the form of '%s [happy/meh/sad/tech] [message]'", r.Command)
+		return "", fmt.Errorf("must be in the form of '%s [happy/meh/sad] [message]'", r.Command)
 	}
 
-	c := parts[0]
+	column := parts[0]
 	description := parts[1]
 
 	var (
-		client   *postfacto.RetroClient
 		category postfacto.Category
 	)
 
-	switch Command(c) {
+	switch Command(column) {
 	case CommandHappy:
 		category = postfacto.CategoryHappy
-		client = d.RetroClient
 	case CommandMeh:
 		category = postfacto.CategoryMeh
-		client = d.RetroClient
 	case CommandSad:
 		category = postfacto.CategorySad
-		client = d.RetroClient
-	case CommandTech:
-		category = postfacto.CategoryHappy
-		client = d.TechRetroClient
 	default:
-		return "", errors.New("unknown command: must provide one of 'happy', 'meh', 'sad', or 'tech'")
+		return "", errors.New("unknown command: must provide one of 'happy', 'meh' or 'sad'")
 	}
 
 	retroItem := postfacto.RetroItem{
@@ -111,7 +101,7 @@ func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) 
 		Description: fmt.Sprintf("%s [%s]", description, r.UserName),
 	}
 
-	err := client.Add(retroItem)
+	err := d.RetroClient.Add(retroItem)
 	if err != nil {
 		return "", err
 	}

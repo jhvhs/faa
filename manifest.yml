@@ -2,10 +2,11 @@ applications:
 - name: faa
   instances: 1
   memory: 128M
-  buildpack: go_buildpack
+  buildpacks:
+  - go_buildpack
   routes:
   - route: faa.cfapps.io
   command: faa
   env:
     GOPACKAGENAME: github.com/concourse/faa
-  stack: cflinuxfs2
+  stack: cflinuxfs3
