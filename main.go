@@ -43,7 +43,7 @@ func main() {
 
 	c := &postfacto.RetroClient{
 		ApiHost:  retroApiURL,
-		AppHost: retroAppURL,
+		AppHost:  retroAppURL,
 		ID:       retroID,
 		Password: retroPassword,
 	}
@@ -56,6 +56,7 @@ func main() {
 	}
 
 	http.Handle("/", server)
+	http.HandleFunc("/action-items", handleActionItems(c))
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
@@ -71,6 +72,21 @@ const (
 	CommandMeh   Command = "meh"
 	CommandSad   Command = "sad"
 )
+
+func handleActionItems(c *postfacto.RetroClient) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		fmt.Println("Handling action items")
+		items, err := c.GetUnfinishedActionItems()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+			return
+		}
+		for _, item := range items {
+			_, _ = w.Write([]byte(item.Description + "\n"))
+		}
+	}
+}
 
 func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) {
 	parts := strings.SplitN(r.Text, " ", 2)
